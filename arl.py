@@ -2,33 +2,47 @@
 
 import os
 import libtcodpy as libtcod
-from game import map
+from game import gamemap
 from game import player
 
-class arl(object):
+class ARL(object):
     """The main class to handle stuff."""
     
     def __init__(self):
         """ Constants """
-        self.WINDOW_WIDTH = 20
-        self.WINDOW_HEIGHT = 20
+        self.window_width = 80
+        self.window_height = 50
+        
+        self.map_width = 80
+        self.map_height = 50
+        self.max_amount_of_rooms_in_map = 10
     
         self.do_movement = {}
         self.do_action = {}
     
         self.key_bindings = {}
+        self.keys = {}
         
-        self.player = player.Player((1,1))
+        self.player = player.Player((1, 1))
         
         self.level_map = None
         self.fov_map = None
         self.fov_radius = 0
         self.fov_colors = {}
 
-    def init(self):
+        self.fov_algorithm = 0  #default FOV algorithm
+        self.fov_radius = 10
+        self.fov_light_walls = True  #light walls or not
+
+        self.font = None
+        self.console = None
+
+    def initialize(self):
+        """ General initialization. """
         self.font = os.path.join("data/fonts", "arial12x12.png")
         libtcod.console_set_custom_font(self.font, libtcod.FONT_LAYOUT_TCOD | libtcod.FONT_TYPE_GREYSCALE)
-        libtcod.console_init_root(self.WINDOW_WIDTH, self.WINDOW_HEIGHT, "Anylo's RogueLike", False)
+        libtcod.console_init_root(self.map_width, self.map_height, "Anylo's RogueLike", False)
+        self.console = libtcod.console_new(self.map_width, self.map_height)
         
         self.init_movement()
         self.init_action()
@@ -70,80 +84,97 @@ class arl(object):
                     }
     
     def init_map(self):
-        px, py = self.player.Position
         
-        self.level_map = map.generate_map()
+        """ Creating map, 80x50, max 25 rooms with min room size 5 and max size 12 """ 
+        gen = gamemap.MapGenerator(self.window_width, self.window_height, self.max_amount_of_rooms_in_map, 5, 12)
+        
+        self.level_map = gen.create_map()
+        self.player.position = gen.player_start_point
+        px, py = self.player.position
         
         libtcod.console_clear(0)
         libtcod.console_set_foreground_color(0, libtcod.white)
         libtcod.console_set_foreground_color(0, libtcod.black)
         libtcod.console_put_char(0, px, py, '@', libtcod.BKGND_NONE)
 
-        for y in range(self.WINDOW_HEIGHT):
-            for x in range(self.WINDOW_WIDTH):
-                if self.level_map[y][x] == '=':
+        for y in range(self.map_height):
+            for x in range(self.map_width):
+                if self.level_map[x][y] == '=':
                     libtcod.console_put_char(0, x, y, libtcod.CHAR_DHLINE, libtcod.BKGND_NONE)
         
     def init_fov(self):
-        self.fov_radius = 3
-        self.fov_map = libtcod.map_new(self.WINDOW_WIDTH, self.WINDOW_HEIGHT)
-        for y in range(self.WINDOW_HEIGHT):
-            for x in range(self.WINDOW_WIDTH):
-                if self.level_map[y][x] == '.':
-                    libtcod.map_set_properties(self.fov_map, x, y, True, True)
-                elif self.level_map[y][x] == '=':
-                    libtcod.map_set_properties(self.fov_map, x, y, True, False)
+        self.fov_map = libtcod.map_new(self.map_width, self.map_height)
+        
+        for y in range(self.map_height):
+            for x in range(self.map_width):
+                libtcod.map_set_properties(self.fov_map, x, y, 
+                                           not self.level_map[x][y].tile_property["blocks_walking"], 
+                                           not self.level_map[x][y].tile_property["blocks_visibility"])
                     
         self.fov_colors = {
-                           "dark wall":    libtcod.Color(0, 0, 100),
-                           "light wall":   libtcod.Color(130, 110, 50),
-                           "dark ground":  libtcod.Color(50, 50, 150),
-                           "light ground": libtcod.Color(200, 180, 50)
+                           "dark wall":    libtcod.Color(10, 10, 10),
+                           "light wall":   libtcod.Color(60, 35, 0),
+                           "dark ground":  libtcod.Color(100, 100, 100),
+                           "light ground": libtcod.Color(145, 120, 90)
                            }
         
     
     def get_key(self, key):
         if key.vk == libtcod.KEY_CHAR:
-                return chr(key.c)
+            return chr(key.c)
         else:
             return key.vk
     
     def update(self, key):
         key = self.get_key(key)
         if key in self.keys:
-            type, params = self.keys[key]
+            do_type, params = self.keys[key]
 
-            if type == "movement":
+            if do_type == "movement":
                 dx, dy = params
-                px, py = self.player.Position
+                px, py = self.player.position
                 x, y = (dx+px, dy+py)
                 
-                if self.level_map[y][x] == ".":
-                    libtcod.console_put_char(0, px, py, ".", libtcod.BKGND_NONE)
-                    libtcod.console_put_char(0, x, y, '@', libtcod.BKGND_NONE)
-                    self.player.Position = (x, y)
-                    print self.player.Position
+                if not self.level_map[x][y].tile_property["blocks_walking"]:
+                    libtcod.console_put_char(self.console, px, py, ' ', libtcod.BKGND_NONE)
+                    self.player.position = (x, y)
+                    print self.player.position
                 else:
                     print "Cannot go to %d %d" % (x, y)
                 
-            if type == "action":
+            if do_type == "action":
                 params()
                 
     def draw(self):
-        px, py = self.player.Position
-        libtcod.map_compute_fov(self.fov_map, px, py, self.fov_radius, True)
-        for y in range(self.WINDOW_HEIGHT):
-            for x in range(self.WINDOW_WIDTH):
+        self.recompute_field_of_vision()
+        
+        for y in range(self.window_height):
+            for x in range(self.window_width):
                 affect, cell = 'dark', 'ground'
             
-                if libtcod.map_is_in_fov(self.fov_map, x, y): affect = 'light'
-                if (self.level_map[y][x] == '#'): cell = 'wall'
+                if libtcod.map_is_in_fov(self.fov_map, x, y): 
+                    affect = 'light'
+                if self.level_map[x][y].tile_property["blocks_walking"]:
+                    cell = 'wall'
+                
                 color = self.fov_colors['%s %s' % (affect, cell)]
-                libtcod.console_set_back(0, x, y, color, libtcod.BKGND_SET)
+                libtcod.console_set_back(self.console, x, y, color, libtcod.BKGND_SET)
+        
+        px, py = self.player.position
+        libtcod.console_set_foreground_color(self.console, libtcod.Color(200, 200, 200))
+        libtcod.console_put_char(self.console, px, py, "@", libtcod.BKGND_NONE)
+        
+        libtcod.console_blit(self.console, 0, 0, self.window_width, self.window_height, 0, 0, 0)
+        
+    def recompute_field_of_vision(self):
+        px, py = self.player.position
+        libtcod.map_compute_fov(self.fov_map, px, py, self.fov_radius, self.fov_light_walls, self.fov_algorithm)
 
 def main():
-    theGame = arl()
-    theGame.init()
+    # TODO: Check main loop
+    
+    theGame = ARL()
+    theGame.initialize()
     
     while not libtcod.console_is_window_closed():
         theGame.draw()
