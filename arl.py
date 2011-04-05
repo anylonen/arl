@@ -29,6 +29,14 @@ class ARL(object):
         self.fov_map = None
         self.fov_radius = 0
         self.fov_colors = {}
+        
+        self.colors =   {
+                        "dark wall":    libtcod.Color(10, 10, 10),
+                        "light wall":   libtcod.Color(60, 35, 0),
+                        "dark ground":  libtcod.Color(100, 100, 100),
+                        "light ground": libtcod.Color(145, 120, 90)
+                        }
+
 
         self.fov_algorithm = 0  #default FOV algorithm
         self.fov_radius = 10
@@ -85,22 +93,25 @@ class ARL(object):
     
     def init_map(self):
         
-        """ Creating map, 80x50, max 25 rooms with min room size 5 and max size 12 """ 
-        gen = gamemap.MapGenerator(self.window_width, self.window_height, self.max_amount_of_rooms_in_map, 5, 12)
+        """ Creating map, 80x50, max 25 rooms with min room size 5 and max size 12 """
+        room_min_size = 5
+        room_max_size = 12
+         
+        gen = gamemap.MapGenerator(self.window_width, self.window_height, self.max_amount_of_rooms_in_map, room_min_size, room_max_size)
         
         self.level_map = gen.create_map()
         self.player.position = gen.player_start_point
         px, py = self.player.position
         
-        libtcod.console_clear(0)
-        libtcod.console_set_foreground_color(0, libtcod.white)
-        libtcod.console_set_foreground_color(0, libtcod.black)
-        libtcod.console_put_char(0, px, py, '@', libtcod.BKGND_NONE)
+        libtcod.console_clear(self.console)
+        libtcod.console_set_foreground_color(self.console, libtcod.white)
+        libtcod.console_set_foreground_color(self.console, libtcod.black)
+        libtcod.console_put_char(self.console, px, py, '@', libtcod.BKGND_NONE)
 
         for y in range(self.map_height):
             for x in range(self.map_width):
                 if self.level_map[x][y] == '=':
-                    libtcod.console_put_char(0, x, y, libtcod.CHAR_DHLINE, libtcod.BKGND_NONE)
+                    libtcod.console_put_char(self.console, x, y, libtcod.CHAR_DHLINE, libtcod.BKGND_NONE)
         
     def init_fov(self):
         self.fov_map = libtcod.map_new(self.map_width, self.map_height)
@@ -111,13 +122,13 @@ class ARL(object):
                                            not self.level_map[x][y].tile_property["blocks_walking"], 
                                            not self.level_map[x][y].tile_property["blocks_visibility"])
                     
-        self.fov_colors = {
+        """self.fov_colors = {
                            "dark wall":    libtcod.Color(10, 10, 10),
                            "light wall":   libtcod.Color(60, 35, 0),
                            "dark ground":  libtcod.Color(100, 100, 100),
                            "light ground": libtcod.Color(145, 120, 90)
                            }
-        
+        """
     
     def get_key(self, key):
         if key.vk == libtcod.KEY_CHAR:
@@ -146,20 +157,28 @@ class ARL(object):
                 params()
                 
     def draw(self):
+        # FIXME: recompute_fov is called always (even when it's not necessary.
         self.recompute_field_of_vision()
         
         for y in range(self.window_height):
             for x in range(self.window_width):
-                affect, cell = 'dark', 'ground'
-            
-                if libtcod.map_is_in_fov(self.fov_map, x, y): 
-                    affect = 'light'
-                if self.level_map[x][y].tile_property["blocks_walking"]:
-                    cell = 'wall'
                 
-                color = self.fov_colors['%s %s' % (affect, cell)]
-                libtcod.console_set_back(self.console, x, y, color, libtcod.BKGND_SET)
-        
+                """ Do we see tile in (x, y)? If not, check is it already explored. If not, don't show it """
+                if not libtcod.map_is_in_fov(self.fov_map, x, y):
+                    if self.level_map[x][y].tile_property["is_explored"]:
+                        if self.level_map[x][y].tile_property["blocks_walking"]:
+                            libtcod.console_set_back(self.console, x, y, self.colors["dark wall"], libtcod.BKGND_SET)
+                        else:
+                            libtcod.console_set_back(self.console, x, y, self.colors["dark ground"], libtcod.BKGND_SET)
+                            
+                else:
+                    if self.level_map[x][y].tile_property["blocks_walking"]:
+                        libtcod.console_set_back(self.console, x, y, self.colors["light wall"], libtcod.BKGND_SET)
+                    else:
+                        libtcod.console_set_back(self.console, x, y, self.colors["light ground"], libtcod.BKGND_SET)
+                        
+                    self.level_map[x][y].tile_property["is_explored"] = True
+            
         px, py = self.player.position
         libtcod.console_set_foreground_color(self.console, libtcod.Color(200, 200, 200))
         libtcod.console_put_char(self.console, px, py, "@", libtcod.BKGND_NONE)
