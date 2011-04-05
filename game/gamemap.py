@@ -25,6 +25,7 @@ class MapTile():
         self.tile_property = {}
         self.tile_property["blocks_walking"] = blocks_walking
         self.tile_property["blocks_visibility"] = blocks_visibility
+        self.tile_property["is_explored"] = False
 
 class MapGenerator():
     """ MapGenerator creates game map and sets the starting position. """
