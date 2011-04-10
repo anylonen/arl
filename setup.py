@@ -8,8 +8,8 @@ $Date: $
 
 __author__ = "Anylo"
 __author_email__ = "anylonen@gmail.com"
-__version__ = "0.0.3"
-__date__ = "2011-04-01"
+__version__ = "0.0.4"
+__date__ = "2011-04-10"
 
 try:
     import setuptools
