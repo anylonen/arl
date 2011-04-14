@@ -1,3 +1,17 @@
+import libtcodpy as libtcod
+
+class GameObject():
+    """ This is a generic class for different game objects. """
+    def __init__(self, position, character, color, blocks_movement = False):
+        self.position = position
+        self.character = character
+        self.color = color
+        
+    def draw(self, console):
+        x, y = self.position
+        libtcod.console_set_foreground_color(console, self.color)
+        libtcod.console_put_char(console, x, y, self.character, libtcod.BKGND_NONE)
+
 class Rectangle():
     """ Rectangle class. Used for room creations etc. """
     
