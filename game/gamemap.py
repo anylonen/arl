@@ -22,40 +22,47 @@ class MapGenerator():
         self.rooms_in_map = []
         self.current_amount_of_rooms = 0
         
-        self.player_start_point = (0, 0)
+        self.spawn_points = []
 
         self.gamemap = [[ MapTile()
                     for y in range(map_height) ]
                         for x in range(map_width) ]
+
+
+    def connect_rooms(self, room_candidate):
+        previous_room = self.rooms_in_map[self.current_amount_of_rooms - 1]
+        self.create_horizontal_tunnel(previous_room, room_candidate)
+        self.create_vertical_tunnel(previous_room, room_candidate)
+
+
+    def add_spawn_point(self, room_candidate):
+        self.spawn_points.append(room_candidate.get_center())
+
+    def create_new_room(self, room_candidate):
+        self.create_room(room_candidate)
+        
+        if self.current_amount_of_rooms > 0:
+            self.connect_rooms(room_candidate)
+
+        self.add_spawn_point(room_candidate)
+        self.add_room_to_map(room_candidate)
+
+
+    def can_room_be_created(self, room_candidate):
+        for existing_room in self.rooms_in_map:
+            if room_candidate.does_intersect(existing_room):
+                return False
+                
+        return True
 
     def create_map(self):
         """ Map generator. Size of map is MAP_WIDTH x MAP_HEIGHT. """
         for room in range(self.max_amount_of_rooms_in_map):
             room_candidate = self.create_room_candidate()
             
-            room_can_be_created = True            
-            
-            for existing_room in self.rooms_in_map:
-                if room_candidate.does_intersect(existing_room):
-                    room_can_be_created = False
-                    break
-                
-            if room_can_be_created:
-                self.create_room(room_candidate)
-                
-                if self.current_amount_of_rooms == 0:
-                    """ Center of the first room is the start point for the player. """
-                    self.player_start_point = room_candidate.get_center()
-                    
-                else:
-                    """ Connect two rooms together. """
-                    previous_room = self.rooms_in_map[self.current_amount_of_rooms - 1]
-                    self.create_horizontal_tunnel(previous_room, room_candidate)
-                    self.create_vertical_tunnel(previous_room, room_candidate)
+            if self.can_room_be_created(room_candidate):
+                self.create_new_room(room_candidate)
 
-                self.add_room_to_map(room_candidate)
-
-        # return MAP
         return self.gamemap
 
     def create_room_candidate(self):

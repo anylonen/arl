@@ -3,7 +3,7 @@
 import os
 import libtcodpy as libtcod
 from game import gamemap
-from game import player
+from game import character
 
 class Panel(object):
     def __init__(self, x = 0, y = 0, width = 80, height = 5):
@@ -23,6 +23,7 @@ class Panel(object):
 class ARL(object):
     """The main class to handle stuff."""
     
+
     def __init__(self):
         """ Constants """
         self.window_width = 80
@@ -40,9 +41,11 @@ class ARL(object):
         self.key_bindings = {}
         self.keys = {}
         
-        self.player = player.Player((1, 1))
+        self.player = None
+        self.monsters = []
         
         self.level_map = None
+        self.level_map_spawn_points = []
         self.fov_map = None
         self.fov_radius = 0
         self.fov_colors = {}
@@ -63,6 +66,13 @@ class ARL(object):
         self.console_map = None
         self.console_panel = None
 
+    def init_player(self):
+        self.player = character.Player(self.level_map_spawn_points[0], "@", libtcod.Color(200, 200, 200))
+
+    def init_monsters(self):
+        # TODO: Change spawn point to random, now it's the second room
+        self.monsters.append(character.Monster(self.level_map_spawn_points[1], "m", libtcod.Color(0, 0, 255)))
+
     def initialize(self):
         """ General initialization. """
         self.font = os.path.join("data/fonts", "arial12x12.png")
@@ -76,8 +86,15 @@ class ARL(object):
         self.init_panel()
         self.init_fov()
 
+        self.init_player()
+        self.init_monsters()
+
+
     def do_nothing(self):
         print "Doing nothing"
+        
+    def do_fullscreen(self):
+        libtcod.console_set_fullscreen(not libtcod.console_is_fullscreen())
 
     def init_movement(self):
         self.do_movement = {
@@ -93,7 +110,8 @@ class ARL(object):
     
     def init_action(self):
         self.do_action = {
-                          "nothing":    self.do_nothing
+                          "nothing":    self.do_nothing,
+                          "fullscreen": self.do_fullscreen
                           }
 
     def init_bindings(self):
@@ -106,7 +124,8 @@ class ARL(object):
                     libtcod.KEY_KP1:    ("movement", self.do_movement["southwest"]),
                     libtcod.KEY_KP4:    ("movement", self.do_movement["west"]),
                     libtcod.KEY_KP7:    ("movement", self.do_movement["northwest"]),
-                    libtcod.KEY_KP5:    ("action",  self.do_action["nothing"])
+                    libtcod.KEY_KP5:    ("action",  self.do_action["nothing"]),
+                    libtcod.KEY_F11:    ("action",  self.do_action["fullscreen"])
                     }
         
         
@@ -122,27 +141,16 @@ class ARL(object):
     
     def init_map(self):
         
-        """ Creating map, 80x50, max 25 rooms with min room size 5 and max size 12 """
         room_min_size = 5
         room_max_size = 12
 
         self.console_map = libtcod.console_new(self.map_width, self.map_height)
          
-        gen = gamemap.MapGenerator(self.map_width, self.map_height, self.max_amount_of_rooms_in_map, room_min_size, room_max_size)
+        level_map = gamemap.MapGenerator(self.map_width, self.map_height, self.max_amount_of_rooms_in_map, room_min_size, room_max_size)
         
-        self.level_map = gen.create_map()
-        self.player.position = gen.player_start_point
-        px, py = self.player.position
+        self.level_map = level_map.create_map()
+        self.level_map_spawn_points = level_map.spawn_points
         
-        libtcod.console_clear(self.console_map)
-        libtcod.console_set_foreground_color(self.console_map, libtcod.white)
-        libtcod.console_set_foreground_color(self.console_map, libtcod.black)
-        libtcod.console_put_char(self.console_map, px, py, '@', libtcod.BKGND_NONE)
-
-        for y in range(self.map_height):
-            for x in range(self.map_width):
-                if self.level_map[x][y] == '=':
-                    libtcod.console_put_char(self.console_map, x, y, libtcod.CHAR_DHLINE, libtcod.BKGND_NONE)
         
     def init_fov(self):
         self.fov_map = libtcod.map_new(self.map_width, self.map_height)
@@ -160,18 +168,29 @@ class ARL(object):
         else:
             return key.vk
     
+    def is_wall_in_way(self, x, y):
+            return self.level_map[x][y].tile_property["blocks_walking"]
+    
+    def is_object_in_way(self, x, y):
+        for monster in self.monsters:
+            if monster.position == (x, y):
+                return True
+        return False
+    
+    def is_player_in_way(self, x, y):
+        return self.player.position == (x, y)
 
-    def update_movement(self, movement_direction):
+    def update_player_movement(self, movement_direction, ):
         dx, dy = movement_direction
         px, py = self.player.position
         x, y = dx + px, dy + py
         
-        if not self.level_map[x][y].tile_property["blocks_walking"]:
-            libtcod.console_put_char(self.console_map, px, py, ' ', libtcod.BKGND_NONE)
-            self.player.position = x, y
-            self.message_panel.add_message("Current player position is (%d, %d)" % self.player.position)
-        else:
+        if self.is_wall_in_way(x, y) or self.is_object_in_way(x, y):
             self.message_panel.add_message("Cannot go to %d %d" % (x, y))
+        else:
+            libtcod.console_put_char(self.console_map, px, py, ' ', libtcod.BKGND_NONE)
+            self.player.position = (x, y)
+            self.message_panel.add_message("Current player position is (%d, %d)" % self.player.position)
 
     def update(self, key):
         key = self.get_key(key)
@@ -179,11 +198,14 @@ class ARL(object):
             do_type, params = self.keys[key]
 
             if do_type == "movement":
-                self.update_movement(params)
+                self.update_player_movement(params)
                 
             if do_type == "action":
                 params()
-                
+
+    def update_monsters(self):
+        for monster in self.monsters:
+            monster.update(self)
 
     def draw_panel(self):
         # TODO: Change background color back to black after testing
@@ -226,13 +248,21 @@ class ARL(object):
 
         # TODO: draw_player is in wrong place. fix it
         self.draw_player()
+        self.draw_monsters()
+        
         libtcod.console_blit(self.console_map, 0, 0, self.map_width, self.map_height, 0, 0, 0)
 
 
     def draw_player(self):
-        px, py = self.player.position
-        libtcod.console_set_foreground_color(self.console_map, libtcod.Color(200, 200, 200))
-        libtcod.console_put_char(self.console_map, px, py, "@", libtcod.BKGND_NONE)
+        self.player.draw(self.console_map)
+        
+    def draw_monsters(self):
+        for monster in self.monsters:
+            x, y = monster.position
+            if libtcod.map_is_in_fov(self.fov_map, x, y):
+                monster.draw(self.console_map)
+            else:
+                libtcod.console_put_char(self.console_map, x, y, ' ', libtcod.BKGND_NONE)
 
     def draw(self):
         # FIXME: recompute_fov is called always (even when it's not necessary.
@@ -249,16 +279,14 @@ class ARL(object):
         libtcod.map_compute_fov(self.fov_map, px, py, self.fov_radius, self.fov_light_walls, self.fov_algorithm)
 
 def main():
-    # TODO: Check main loop
-    
     theGame = ARL()
     theGame.initialize()
     
     while not libtcod.console_is_window_closed():
         theGame.draw()
-        libtcod.console_flush()
         key = libtcod.console_wait_for_keypress(True)
         theGame.update(key)
+        theGame.update_monsters()
         if key.vk == libtcod.KEY_ESCAPE:
             break
 
