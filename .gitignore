@@ -3,3 +3,5 @@
 .settings
 tests
 libtcodpy.py
+*.pyc
+

@@ -1,9 +1,8 @@
 #!/usr/bin/env python
 
-import os
+from game import character, gamemap
 import libtcodpy as libtcod
-from game import gamemap
-from game import character
+import os
 
 class Panel(object):
     def __init__(self, x = 0, y = 0, width = 80, height = 5):
