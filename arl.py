@@ -1,28 +1,12 @@
 #!/usr/bin/env python
 
-from game import character, gamemap
+from engine import character, gamemap, UI
 import libtcodpy as libtcod
 import os
-
-class Panel(object):
-    def __init__(self, x = 0, y = 0, width = 80, height = 5):
-        self.x = x
-        self.y = y
-        self.width = width
-        self.height = height
-        
-        self.maximum_amount_of_messages = 5
-        self.messages = []
-        
-    def add_message(self, message):
-        if len(self.messages) >= self.maximum_amount_of_messages:
-            self.messages.pop(0)
-        self.messages.append(message)
 
 class ARL(object):
     """The main class to handle stuff."""
     
-
     def __init__(self):
         """ Constants """
         self.window_width = 80
@@ -32,7 +16,7 @@ class ARL(object):
         self.map_height = 45
         self.max_amount_of_rooms_in_map = 10
     
-        self.message_panel = Panel()
+        self.message_panel = UI.Panel()
     
         self.do_movement = {}
         self.do_action = {}
@@ -49,13 +33,12 @@ class ARL(object):
         self.fov_radius = 0
         self.fov_colors = {}
         
-        self.colors =   {
+        self.colors = {
                         "dark wall":    libtcod.Color(10, 10, 10),
                         "light wall":   libtcod.Color(60, 35, 0),
                         "dark ground":  libtcod.Color(100, 100, 100),
                         "light ground": libtcod.Color(145, 120, 90)
                         }
-
 
         self.fov_algorithm = 0  #default FOV algorithm
         self.fov_radius = 10
@@ -123,8 +106,8 @@ class ARL(object):
                     libtcod.KEY_KP1:    ("movement", self.do_movement["southwest"]),
                     libtcod.KEY_KP4:    ("movement", self.do_movement["west"]),
                     libtcod.KEY_KP7:    ("movement", self.do_movement["northwest"]),
-                    libtcod.KEY_KP5:    ("action",  self.do_action["nothing"]),
-                    libtcod.KEY_F11:    ("action",  self.do_action["fullscreen"])
+                    libtcod.KEY_KP5:    ("action", self.do_action["nothing"]),
+                    libtcod.KEY_F11:    ("action", self.do_action["fullscreen"])
                     }
         
         
@@ -156,8 +139,8 @@ class ARL(object):
         
         for y in range(self.map_height):
             for x in range(self.map_width):
-                libtcod.map_set_properties(self.fov_map, x, y, 
-                                           not self.level_map[x][y].tile_property["blocks_walking"], 
+                libtcod.map_set_properties(self.fov_map, x, y,
+                                           not self.level_map[x][y].tile_property["blocks_walking"],
                                            not self.level_map[x][y].tile_property["blocks_visibility"])
                     
     
@@ -168,7 +151,7 @@ class ARL(object):
             return key.vk
     
     def is_wall_in_way(self, x, y):
-            return self.level_map[x][y].tile_property["blocks_walking"]
+        return self.level_map[x][y].tile_property["blocks_walking"]
     
     def is_object_in_way(self, x, y):
         for monster in self.monsters:
@@ -179,7 +162,7 @@ class ARL(object):
     def is_player_in_way(self, x, y):
         return self.player.position == (x, y)
 
-    def update_player_movement(self, movement_direction, ):
+    def update_player_movement(self, movement_direction,):
         dx, dy = movement_direction
         px, py = self.player.position
         x, y = dx + px, dy + py
@@ -291,4 +274,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
