@@ -162,7 +162,7 @@ class ARL(object):
     def is_player_in_way(self, x, y):
         return self.player.position == (x, y)
 
-    def update_player_movement(self, movement_direction):
+    def update_player_movement(self, movement_direction,):
         dx, dy = movement_direction
         px, py = self.player.position
         x, y = dx + px, dy + py
