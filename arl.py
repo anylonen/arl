@@ -10,7 +10,6 @@ class ARL(object):
     def __init__(self):
         """ Constants """
         resource_loader = utils.ResourceLoader("arl.cfg")
-        print resource_loader.settings
 
         self.window_width = resource_loader.settings["window_width"]
         self.window_height = resource_loader.settings["window_height"]
