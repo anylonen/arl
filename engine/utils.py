@@ -10,7 +10,7 @@ class GameObject():
 
     def draw(self, console):
         x, y = self.position
-        libtcod.console_set_foreground_color(console, self.color)
+        libtcod.console_set_default_foreground(console, self.color)
         libtcod.console_put_char(console, x, y, self.character, libtcod.BKGND_NONE)
 
 class Rectangle():

@@ -193,11 +193,11 @@ class ARL(object):
 
     def draw_panel(self):
         # TODO: Change background color back to black after testing
-        libtcod.console_set_background_color(self.console_panel, libtcod.dark_gray)
+        libtcod.console_set_default_background(self.console_panel, libtcod.dark_gray)
         libtcod.console_clear(self.console_panel)
 
         for index in range(len(self.message_panel.messages)):
-            libtcod.console_print_left(self.console_panel, 0, index, libtcod.BKGND_NONE, self.message_panel.messages[index])
+            libtcod.console_print(self.console_panel, 0, index, self.message_panel.messages[index])
 
         libtcod.console_blit(self.console_panel, 0, 0, self.message_panel.width, self.message_panel.height, 0, self.message_panel.x, self.message_panel.y)
 
@@ -205,16 +205,16 @@ class ARL(object):
     def draw_unseen_tiles(self, y, x):
         if self.level_map[x][y].tile_property["is_explored"]:
             if self.level_map[x][y].tile_property["blocks_walking"]:
-                libtcod.console_set_back(self.console_map, x, y, self.colors["dark wall"], libtcod.BKGND_SET)
+                libtcod.console_set_char_background(self.console_map, x, y, self.colors["dark wall"], libtcod.BKGND_SET)
             else:
-                libtcod.console_set_back(self.console_map, x, y, self.colors["dark ground"], libtcod.BKGND_SET)
+                libtcod.console_set_char_background(self.console_map, x, y, self.colors["dark ground"], libtcod.BKGND_SET)
 
 
     def draw_seen_tiles(self, y, x):
         if self.level_map[x][y].tile_property["blocks_walking"]:
-            libtcod.console_set_back(self.console_map, x, y, self.colors["light wall"], libtcod.BKGND_SET)
+            libtcod.console_set_char_background(self.console_map, x, y, self.colors["light wall"], libtcod.BKGND_SET)
         else:
-            libtcod.console_set_back(self.console_map, x, y, self.colors["light ground"], libtcod.BKGND_SET)
+            libtcod.console_set_char_background(self.console_map, x, y, self.colors["light ground"], libtcod.BKGND_SET)
         self.level_map[x][y].tile_property["is_explored"] = True
 
 
@@ -266,13 +266,20 @@ def main():
     theGame = ARL()
     theGame.initialize()
 
-    while not libtcod.console_is_window_closed():
+    key = libtcod.Key()
+    mouse = libtcod.Mouse()
+
+    can_quit = False
+
+    while not libtcod.console_is_window_closed() and not can_quit:
         theGame.draw()
-        key = libtcod.console_wait_for_keypress(True)
-        theGame.update(key)
-        theGame.update_monsters()
-        if key.vk == libtcod.KEY_ESCAPE:
-            break
+        while libtcod.sys_wait_for_event(libtcod.EVENT_KEY_PRESS, key, mouse, True):
+            if key.vk == libtcod.KEY_ESCAPE:
+                can_quit = True
+            else:
+                theGame.update(key)
+                theGame.update_monsters()
+
 
 if __name__ == "__main__":
     main()
