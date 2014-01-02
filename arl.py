@@ -75,7 +75,7 @@ class ARL(object):
 
 
     def do_nothing(self):
-        print "Doing nothing"
+        print("Doing nothing")
 
     def do_fullscreen(self):
         libtcod.console_set_fullscreen(not libtcod.console_is_fullscreen())
@@ -263,8 +263,8 @@ class ARL(object):
         libtcod.map_compute_fov(self.fov_map, px, py, self.fov_radius, self.fov_light_walls, self.fov_algorithm)
 
 def main():
-    theGame = ARL()
-    theGame.initialize()
+    the_game = ARL()
+    the_game.initialize()
 
     key = libtcod.Key()
     mouse = libtcod.Mouse()
@@ -272,13 +272,13 @@ def main():
     can_quit = False
 
     while not libtcod.console_is_window_closed() and not can_quit:
-        theGame.draw()
+        the_game.draw()
         while libtcod.sys_wait_for_event(libtcod.EVENT_KEY_PRESS, key, mouse, True):
             if key.vk == libtcod.KEY_ESCAPE:
                 can_quit = True
             else:
-                theGame.update(key)
-                theGame.update_monsters()
+                the_game.update(key)
+                the_game.update_monsters()
 
 
 if __name__ == "__main__":
