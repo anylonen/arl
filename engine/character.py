@@ -2,7 +2,6 @@
 import libtcodpy as libtcod
 from utils import GameObject
 
-
 class Player(GameObject):
     """Player class. At this point only moving around is supported. """
     
@@ -15,6 +14,7 @@ class Monster(GameObject):
     def __init__(self, position, character, color):
         GameObject.__init__(self, position, character, color, True)
 
+        self.position = position
         self.movement_direction = []
 
         for x in range(-1, 2, 1):
@@ -24,7 +24,7 @@ class Monster(GameObject):
     def get_new_position(self, direction):
         current_x, current_y = self.position
         dx, dy = direction
-        return (current_x + dx, current_y + dy)
+        return current_x + dx, current_y + dy
     
     def update(self, the_game):
         free_space_available = False
