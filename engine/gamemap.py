@@ -1,5 +1,5 @@
-import libtcodpy as libtcod
-from utils import Rectangle
+import tcod as tcod
+from engine.utils import Rectangle
 
 class MapTile():
     """ MapTile class. Holds information about properties like visibility. """
@@ -69,12 +69,12 @@ class MapGenerator():
         """ Create room candidate and return it's rectangle. """
         
         """ Dimensions for new room candidate. """
-        room_width = libtcod.random_get_int(0, self.room_min_size, self.room_max_size)
-        room_height = libtcod.random_get_int(0, self.room_min_size, self.room_max_size)
+        room_width = tcod.random_get_int(0, self.room_min_size, self.room_max_size)
+        room_height = tcod.random_get_int(0, self.room_min_size, self.room_max_size)
 
         """ Location for new room candidate. """
-        x = libtcod.random_get_int(0, 0, self.map_width - room_width - 1)
-        y = libtcod.random_get_int(0, 0, self.map_height - room_height - 1)
+        x = tcod.random_get_int(0, 0, self.map_width - room_width - 1)
+        y = tcod.random_get_int(0, 0, self.map_height - room_height - 1)
 
         return Rectangle(x, y, room_width, room_height)
 
