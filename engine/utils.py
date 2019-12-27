@@ -26,7 +26,7 @@ class Rectangle():
         return (self.x1, self.y1, self.x2, self.y2)
 
     def get_center(self):
-        return (((self.x1 + self.x2) / 2), ((self.y1 + self.y2) / 2))
+        return ((self.x1 + self.x2) // 2), ((self.y1 + self.y2) // 2)
 
     def does_intersect(self, otherRectangle):
         return (self.x1 <= otherRectangle.x2 and self.x2 >= otherRectangle.x1 and

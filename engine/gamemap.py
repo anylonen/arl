@@ -110,4 +110,3 @@ class MapGenerator():
     def make_map_tile_passable(self, x, y):
         self.gamemap[x][y].tile_property["blocks_walking"] = False
         self.gamemap[x][y].tile_property["blocks_visibility"] = False
-    
