@@ -15,6 +15,7 @@ try:
     import setuptools
 except ImportError:
     from ez_setup import use_setuptools
+
     use_setuptools()
 
 from setuptools import setup, find_packages
@@ -22,15 +23,15 @@ from setuptools import setup, find_packages
 __description__ = """Anylo's RogueLike is a simple roguelike game."""
 
 setup(
-    name = "arl",
-    version = __version__,
-    author = __author__,
-    author_email = __author_email__,
-    description = __description__,
-    url = "http://arl.sourceforge.net",
+    name="arl",
+    version=__version__,
+    author=__author__,
+    author_email=__author_email__,
+    description=__description__,
+    url="http://arl.sourceforge.net",
 
-    packages = find_packages(),
+    packages=find_packages(),
 
-    include_package_data = True,
-    zip_safe = False,
-    )
+    include_package_data=True,
+    zip_safe=False, install_requires=['tcod']
+)
