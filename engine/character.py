@@ -1,16 +1,17 @@
-
 import tcod as tcod
 from engine.utils import GameObject
 
+
 class Player(GameObject):
     """Player class. At this point only moving around is supported. """
-    
+
     def __init__(self, position, character, color):
         GameObject.__init__(self, position, character, color, True)
 
+
 class Monster(GameObject):
     """Monster class. """
-    
+
     def __init__(self, position, character, color):
         GameObject.__init__(self, position, character, color, True)
 
@@ -25,10 +26,10 @@ class Monster(GameObject):
         current_x, current_y = self.position
         dx, dy = direction
         return current_x + dx, current_y + dy
-    
+
     def update(self, the_game):
         free_space_available = False
-        
+
         while not free_space_available:
             index = tcod.random_get_int(0, 0, len(self.movement_direction) - 1)
             x, y = self.get_new_position(self.movement_direction[index])
@@ -37,6 +38,3 @@ class Monster(GameObject):
                 tcod.console_put_char(the_game.console_map, old_x, old_y, ' ', tcod.BKGND_NONE)
                 self.position = (x, y)
                 free_space_available = True
-                
-             
-            

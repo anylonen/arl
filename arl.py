@@ -4,6 +4,7 @@ from engine import character, gamemap, UI, utils
 import tcod as tcod
 import os
 
+
 class ARL(object):
     """The main class to handle stuff."""
 
@@ -36,15 +37,15 @@ class ARL(object):
         self.fov_colors = {}
 
         self.colors = {
-                        "dark wall":    tcod.Color(10, 10, 10),
-                        "light wall":   tcod.Color(60, 35, 0),
-                        "dark ground":  tcod.Color(100, 100, 100),
-                        "light ground": tcod.Color(145, 120, 90)
-                        }
+            "dark wall": tcod.Color(10, 10, 10),
+            "light wall": tcod.Color(60, 35, 0),
+            "dark ground": tcod.Color(100, 100, 100),
+            "light ground": tcod.Color(145, 120, 90)
+        }
 
-        self.fov_algorithm = 0  #default FOV algorithm
+        self.fov_algorithm = 0  # default FOV algorithm
         self.fov_radius = 10
-        self.fov_light_walls = True  #light walls or not
+        self.fov_light_walls = True  # light walls or not
 
         self.font = None
         self.console_map = None
@@ -73,7 +74,6 @@ class ARL(object):
         self.init_player()
         self.init_monsters()
 
-
     def do_nothing(self):
         print("Doing nothing")
 
@@ -82,36 +82,35 @@ class ARL(object):
 
     def init_movement(self):
         self.do_movement = {
-                       "north":     (0, -1),
-                       "northeast": (1, -1),
-                       "east":      (1, 0),
-                       "southeast": (1, 1),
-                       "south":     (0, 1),
-                       "southwest": (-1, 1),
-                       "west":      (-1, 0),
-                       "northwest": (-1, -1)
-                       }
+            "north": (0, -1),
+            "northeast": (1, -1),
+            "east": (1, 0),
+            "southeast": (1, 1),
+            "south": (0, 1),
+            "southwest": (-1, 1),
+            "west": (-1, 0),
+            "northwest": (-1, -1)
+        }
 
     def init_action(self):
         self.do_action = {
-                          "nothing":    self.do_nothing,
-                          "fullscreen": self.do_fullscreen
-                          }
+            "nothing": self.do_nothing,
+            "fullscreen": self.do_fullscreen
+        }
 
     def init_bindings(self):
         self.keys = {
-                    tcod.KEY_KP8:    ("movement", self.do_movement["north"]),
-                    tcod.KEY_KP9:    ("movement", self.do_movement["northeast"]),
-                    tcod.KEY_KP6:    ("movement", self.do_movement["east"]),
-                    tcod.KEY_KP3:    ("movement", self.do_movement["southeast"]),
-                    tcod.KEY_KP2:    ("movement", self.do_movement["south"]),
-                    tcod.KEY_KP1:    ("movement", self.do_movement["southwest"]),
-                    tcod.KEY_KP4:    ("movement", self.do_movement["west"]),
-                    tcod.KEY_KP7:    ("movement", self.do_movement["northwest"]),
-                    tcod.KEY_KP5:    ("action", self.do_action["nothing"]),
-                    tcod.KEY_F11:    ("action", self.do_action["fullscreen"])
-                    }
-
+            tcod.KEY_KP8: ("movement", self.do_movement["north"]),
+            tcod.KEY_KP9: ("movement", self.do_movement["northeast"]),
+            tcod.KEY_KP6: ("movement", self.do_movement["east"]),
+            tcod.KEY_KP3: ("movement", self.do_movement["southeast"]),
+            tcod.KEY_KP2: ("movement", self.do_movement["south"]),
+            tcod.KEY_KP1: ("movement", self.do_movement["southwest"]),
+            tcod.KEY_KP4: ("movement", self.do_movement["west"]),
+            tcod.KEY_KP7: ("movement", self.do_movement["northwest"]),
+            tcod.KEY_KP5: ("action", self.do_action["nothing"]),
+            tcod.KEY_F11: ("action", self.do_action["fullscreen"])
+        }
 
     def init_panel(self):
         panel_height = 5
@@ -130,11 +129,11 @@ class ARL(object):
 
         self.console_map = tcod.console_new(self.map_width, self.map_height)
 
-        level_map = gamemap.MapGenerator(self.map_width, self.map_height, self.max_amount_of_rooms_in_map, room_min_size, room_max_size)
+        level_map = gamemap.MapGenerator(self.map_width, self.map_height, self.max_amount_of_rooms_in_map,
+                                         room_min_size, room_max_size)
 
         self.level_map = level_map.create_map()
         self.level_map_spawn_points = level_map.spawn_points
-
 
     def init_fov(self):
         self.fov_map = tcod.map_new(self.map_width, self.map_height)
@@ -144,7 +143,6 @@ class ARL(object):
                 tcod.map_set_properties(self.fov_map, x, y,
                                         not self.level_map[x][y].tile_property["blocks_walking"],
                                         not self.level_map[x][y].tile_property["blocks_visibility"])
-
 
     def get_key(self, key):
         if key.vk == tcod.KEY_CHAR:
@@ -164,7 +162,7 @@ class ARL(object):
     def is_player_in_way(self, x, y):
         return self.player.position == (x, y)
 
-    def update_player_movement(self, movement_direction,):
+    def update_player_movement(self, movement_direction, ):
         dx, dy = movement_direction
         px, py = self.player.position
         x, y = dx + px, dy + py
@@ -199,8 +197,8 @@ class ARL(object):
         for index in range(len(self.message_panel.messages)):
             tcod.console_print(self.console_panel, 0, index, self.message_panel.messages[index])
 
-        tcod.console_blit(self.console_panel, 0, 0, self.message_panel.width, self.message_panel.height, 0, self.message_panel.x, self.message_panel.y)
-
+        tcod.console_blit(self.console_panel, 0, 0, self.message_panel.width, self.message_panel.height, 0,
+                          self.message_panel.x, self.message_panel.y)
 
     def draw_unseen_tiles(self, y, x):
         if self.level_map[x][y].tile_property["is_explored"]:
@@ -209,7 +207,6 @@ class ARL(object):
             else:
                 tcod.console_set_char_background(self.console_map, x, y, self.colors["dark ground"], tcod.BKGND_SET)
 
-
     def draw_seen_tiles(self, y, x):
         if self.level_map[x][y].tile_property["blocks_walking"]:
             tcod.console_set_char_background(self.console_map, x, y, self.colors["light wall"], tcod.BKGND_SET)
@@ -217,13 +214,11 @@ class ARL(object):
             tcod.console_set_char_background(self.console_map, x, y, self.colors["light ground"], tcod.BKGND_SET)
         self.level_map[x][y].tile_property["is_explored"] = True
 
-
     def draw_tiles(self, y, x):
         if tcod.map_is_in_fov(self.fov_map, x, y):
             self.draw_seen_tiles(y, x)
         else:
             self.draw_unseen_tiles(y, x)
-
 
     def draw_map(self):
         for y in range(self.map_height):
@@ -235,7 +230,6 @@ class ARL(object):
         self.draw_monsters()
 
         tcod.console_blit(self.console_map, 0, 0, self.map_width, self.map_height, 0, 0, 0)
-
 
     def draw_player(self):
         self.player.draw(self.console_map)
@@ -262,6 +256,7 @@ class ARL(object):
         px, py = self.player.position
         tcod.map_compute_fov(self.fov_map, px, py, self.fov_radius, self.fov_light_walls, self.fov_algorithm)
 
+
 def main():
     the_game = ARL()
     the_game.initialize()
@@ -282,6 +277,7 @@ def main():
                 the_game.update(key)
                 the_game.update_monsters()
                 the_game.draw()
+
 
 if __name__ == "__main__":
     main()
